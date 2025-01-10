@@ -2,13 +2,20 @@
 
 ipset_name="blacklist"
 
-#Create set with applying timeout to block IP in a particular period
-#/dev/null - redirect all stdout and stderr
-if ! sudo ipset list $ipset_name &>/dev/null;then
-    sudo ipset create blacklist hash:ip timeout 120
-else 
-    echo "Set $ipset_name has already exist"
-fi
+# #Create set with applying timeout to block IP in a particular period
+# #/dev/null - redirect all stdout and stderr
+# if ! sudo ipset list $ipset_name &>/dev/null;then
+#     sudo ipset create blacklist hash:ip timeout 120
+# else 
+#     echo "Set $ipset_name has already exist"
+# fi
+
+sudo iptables -F 
+sudo ipset destroy $ipset_name
+
+sudo ipset create blacklist hash:ip timeout 120s
+sudo iptables -A FORWARD -m set --match-set blacklist src -j DROP
+
 
 #Directory storing the attacker ips file
 watch_dir="../Vinh/implement/Final/system/temp_storage/csv_attacker_ips"
@@ -18,6 +25,7 @@ read_and_add_ips(){
 
     #Check whether file is empty or not
     if [[ ! -s "$file" ]]; then 
+        echo "-------------------------------------------------------------------"
         echo "File $file empty."
         return
     fi
